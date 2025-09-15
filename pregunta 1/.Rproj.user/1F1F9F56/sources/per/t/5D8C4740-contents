@@ -1,0 +1,202 @@
+
+---
+title: "Práctica Calificada 1 – Técnicas Multivariadas (Template)"
+author: "Equipo"
+date: "`r format(Sys.Date())`"
+output:
+  pdf_document:
+    number_sections: true
+    toc: true
+    toc_depth: 2
+fontsize: 11pt
+geometry: margin=1in
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+library(tidyverse)
+library(Hotelling)     # hotelling.test
+library(car)           # Anova / utilidades
+```
+
+# Datos y preparación
+
+**Fuente:** `StudentsPerformance.csv` (1000 obs., 8 variables).  
+Respuestas cuantitativas: `math score`, `reading score`, `writing score`.  
+Factores candidatos: `gender`, `race/ethnicity`, `parental level of education`, `lunch`, `test preparation course`.
+
+```{r load-data}
+# Ajusta la ruta si fuera necesario
+df <- read.csv("StudentsPerformance.csv")
+
+# Renombrar variables a nombres sin espacios (más cómodo en R)
+df <- df %>% 
+  rename("math" = 'math score',
+         "reading" = 'reading score',
+         "writing" = 'writing score',
+         "race" = 'race/ethnicity',
+         "parent_edu" = 'parental level of education',
+         "prep" = 'test preparation course')
+
+str(df)
+summary(df[, c("math","reading","writing")])
+```
+
+## Exploración descriptiva y gráfica
+```{r eda}
+pairs(df[, c("math","reading","writing")], main = "Gráfico de pares")
+cor(df[, c("math","reading","writing")])
+df %>% 
+  pivot_longer(c("math", "reading", "writing"), names_to = "test", values_to = "score") %>% 
+  ggplot(aes(x = test, y = score)) + 
+  geom_boxplot() + 
+  labs(title = "Distribución de puntajes por prueba")
+```
+
+# 1. Prueba Z^2 (Σ conocida) para vector de medias
+
+**Hipótesis:**  
+- H0: μ = μ0  
+- H1: μ ≠ μ0  
+
+> Nota: Debes **especificar Σ conocida** (proveniente de la teoría, manual o un estudio previo). En este ejemplo ponemos un Σ0 _de ejemplo_; reemplázalo por la matriz conocida de tu caso.
+
+```{r z2}
+X <- as.matrix(df[, c("math","reading","writing")])
+n <- nrow(X)
+p <- ncol(X)
+
+# Vector hipotético de medias (modifica si corresponde)
+mu0 <- c(70, 70, 70)
+
+# MATRIZ SIGMA "CONOCIDA": REEMPLAZA POR LA TUYA
+# Ejemplo: varianzas cercanas a 230–270 y correlaciones positivas moderadas
+Sigma0 <- matrix(c(260,  120, 115,
+                   120,  240, 130,
+                   115,  130, 250), nrow = 3, byrow = TRUE)
+
+xbar <- colMeans(X)
+Z2 <- as.numeric(n * t(xbar - mu0) %*% solve(Sigma0) %*% (xbar - mu0))
+crit <- qchisq(0.95, df = p)   # nivel 5%
+p_value <- 1 - pchisq(Z2, df = p)
+
+data.frame(Z2 = Z2, chi2_0.95 = crit, df = p, p_value = p_value)
+```
+
+**Interpretación:** Con base en el valor de Z² y el *p-value*, decide si rechazar o no H0 al 5% e interpreta en términos de los puntajes.
+
+# 2. Hotelling T^2 para muestras dependientes
+
+**Situación:** comparamos dos **vectores** de medidas del mismo estudiante (pares).  
+Propuesta para este dataset:  
+- **Vector A:** (math, reading)  
+- **Vector B:** (reading, writing)  
+Así medimos si, en promedio, el vector A difiere del vector B para el **mismo** individuo.
+
+**Hipótesis:**  
+- H0: μ_D = 0, donde D = A − B (vector de diferencias)  
+- H1: μ_D ≠ 0
+
+```{r paired-hotelling}
+A <- as.matrix(df[, c("math","reading")])
+B <- as.matrix(df[, c("reading","writing")])
+D <- A - B  # matriz n x p con p=2
+
+hotelling.test(D, mu = c(0,0))
+```
+
+**Interpretación:** Comenta magnitud/ dirección de las medias de diferencia y si existen diferencias multivariadas significativas entre los vectores A y B.
+
+# 3. Hotelling T^2 para muestras independientes
+
+**Ejemplo:** comparar (math, reading, writing) entre `prep` = *completed* vs *none*.
+
+**Hipótesis:**  
+- H0: μ_completed = μ_none  
+- H1: μ_completed ≠ μ_none
+
+```{r indep-hotelling}
+grp1 <- df %>% filter(prep == "completed") %>% select(math, reading, writing)
+grp2 <- df %>% filter(prep == "none") %>% select(math, reading, writing)
+
+hotelling.test(grp1, grp2)
+```
+
+**Chequeos básicos:** tamaño de muestra por grupo y matrices de covarianza aproximadas.
+```{r indep-checks}
+sapply(split(df$math, df$prep), length)
+cov(grp1); cov(grp2)
+```
+
+**Interpretación:** Explica si el curso de preparación se asocia con un cambio multivariado en los puntajes.
+
+# 4. MANOVA en DBCA (bloques)
+
+**Diseño propuesto:**  
+- **Tratamiento:** `prep` (*completed* / *none*)  
+- **Bloque:** `race` (grupos A–E)  
+- **Respuesta:** (math, reading, writing)
+
+```{r manova-dbca}
+man_dbca <- manova(cbind(math, reading, writing) ~ prep + race, data = df)
+summary(man_dbca, test = "Wilks")
+```
+
+**Post-hoc / efectos univariados (opcional):**
+```{r manova-univ}
+summary.aov(man_dbca)  # ANOVAs por variable de respuesta
+```
+
+**Interpretación:** Determina si el tratamiento tiene efecto después de controlar por los bloques.
+
+# 5. MANOVA factorial con bloques (A * B en DBCA)
+
+**Diseño propuesto:**  
+- **Factores:** `gender * lunch`  
+- **Bloque:** `race`  
+- **Respuesta:** (math, reading, writing)
+
+```{r manova-factorial}
+man_fact <- manova(cbind(math, reading, writing) ~ gender * lunch + race, data = df)
+summary(man_fact, test = "Wilks")
+summary.aov(man_fact)
+```
+
+**Interpretación:** Comenta efectos principales e interacción `gender:lunch` sobre los puntajes, controlando por `race` como bloque.
+
+# 6. Presentación de un MANOVA en DBCA (resumen ejecutivo)
+
+Presenta en media página: objetivo, modelo especificado, estadístico (Wilks/Lawley-Hotelling/Pillai), *p-value*, conclusión y breve discusión práctica (magnitudes/medias por grupos y visuales de apoyo).
+
+```{r group-means, fig.height=4}
+df %>% 
+  group_by(prep, race) %>% 
+  summarise(across(c(math, reading, writing), mean), .groups = "drop") %>% 
+  pivot_longer(c(math, reading, writing), names_to = "test", values_to = "mean") %>% 
+  ggplot(aes(prep, mean)) + 
+  geom_point(position = position_dodge(width = 0.3)) + 
+  geom_line(aes(group = race), alpha = 0.4) + 
+  facet_wrap(~test, scales = "free_y") + 
+  labs(title = "Medias por tratamiento y bloque")
+```
+
+# Apéndice: supuestos y diagnósticos (sugerencias)
+
+- Normalidad multivariada (por grupo): inspeccionar QQ-plots univariados y **Mardia** (paquete `MVN`) si se desea.  
+- Homogeneidad de matrices de covarianza (Box's M, paquete `biotools`).  
+- Outliers multivariados: distancias de Mahalanobis.
+
+```{r diagnostics, eval=FALSE}
+# install.packages("MVN"); install.packages("biotools")
+library(MVN)
+library(biotools)
+
+# Normalidad multivariada por grupo de prep
+MVN::mvn(df %>% filter(prep=="completed") %>% select(math,reading,writing), mvnTest="mardia")
+MVN::mvn(df %>% filter(prep=="none") %>% select(math,reading,writing), mvnTest="mardia")
+
+# Homogeneidad de covarianzas
+biotools::boxM(df[,c("math","reading","writing")], df$prep)
+```
+
+**Checklist de reporte:** en cada sección incluye: datos usados, hipótesis, método, resultado numérico (estadístico y *p-value*), interpretación y gráficos de apoyo.

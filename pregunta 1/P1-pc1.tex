@@ -1,0 +1,450 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[
+]{article}
+\usepackage{amsmath,amssymb}
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math} % this also loads fontspec
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+\usepackage{lmodern}
+\ifPDFTeX\else
+  % xetex/luatex font selection
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\usepackage[margin=1in]{geometry}
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\usepackage{framed}
+\definecolor{shadecolor}{RGB}{248,248,248}
+\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{0.94,0.16,0.16}{#1}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\BuiltInTok}[1]{#1}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.64,0.00,0.00}{\textbf{#1}}}
+\newcommand{\ExtensionTok}[1]{#1}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\ImportTok}[1]{#1}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\NormalTok}[1]{#1}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\RegionMarkerTok}[1]{#1}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\usepackage{graphicx}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+% Set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+\ifLuaTeX
+  \usepackage{selnolig}  % disable illegal ligatures
+\fi
+\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\urlstyle{same}
+\hypersetup{
+  pdftitle={PC1 -- P1: Prueba Z² con Σ conocida (estilo del profesor)},
+  pdfauthor={Equipo --- Responsable P1: \_\_\_\_\_\_\_\_},
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+
+\title{PC1 -- P1: Prueba Z² con Σ conocida (estilo del profesor)}
+\usepackage{etoolbox}
+\makeatletter
+\providecommand{\subtitle}[1]{% add subtitle to \maketitle
+  \apptocmd{\@title}{\par {\large #1 \par}}{}{}
+}
+\makeatother
+\subtitle{Composición química de un licor (5 variables)}
+\author{Equipo --- Responsable P1: \_\_\_\_\_\_\_\_}
+\date{10 Setiembre 2025}
+
+\begin{document}
+\maketitle
+
+{
+\setcounter{tocdepth}{3}
+\tableofcontents
+}
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Solo paquetes usados por el profe (y MASS para simular)}
+\FunctionTok{suppressPackageStartupMessages}\NormalTok{(\{}
+  \FunctionTok{library}\NormalTok{(MASS)          }\CommentTok{\# mvrnorm}
+  \FunctionTok{library}\NormalTok{(summarytools)  }\CommentTok{\# descr}
+  \FunctionTok{library}\NormalTok{(nortest)       }\CommentTok{\# lillie.test}
+  \FunctionTok{library}\NormalTok{(mvnormtest)    }\CommentTok{\# mshapiro.test}
+  \CommentTok{\# library(BSDA)        \# z.test (opcional univariado, descomentar si lo usas)}
+\NormalTok{\})}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Warning: package 'mvnormtest' was built under R version 4.3.3
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{options}\NormalTok{(}\AttributeTok{digits =} \DecValTok{4}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi})}
+\tightlist
+\item
+  Datos y parámetros conocidos
+\end{enumerate}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{set.seed}\NormalTok{(}\DecValTok{123}\NormalTok{)}
+
+\CommentTok{\# Vector objetivo (bajo H0)}
+\NormalTok{mu0 }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\DecValTok{40}\NormalTok{, }\DecValTok{70}\NormalTok{, }\DecValTok{200}\NormalTok{, }\DecValTok{140}\NormalTok{, }\FloatTok{1.20}\NormalTok{)}
+\FunctionTok{names}\NormalTok{(mu0) }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\StringTok{"alcohol\_pct"}\NormalTok{,}\StringTok{"metanol\_mgL"}\NormalTok{,}\StringTok{"alcoholes\_sup\_mgL"}\NormalTok{,}\StringTok{"esteres\_mgL"}\NormalTok{,}\StringTok{"acidez\_gL"}\NormalTok{)}
+
+\CommentTok{\# Desv. estándar y correlaciones}
+\NormalTok{sd }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\FloatTok{1.0}\NormalTok{, }\DecValTok{25}\NormalTok{, }\DecValTok{70}\NormalTok{, }\DecValTok{50}\NormalTok{, }\FloatTok{0.35}\NormalTok{)}
+\NormalTok{R  }\OtherTok{\textless{}{-}} \FunctionTok{matrix}\NormalTok{(}\FunctionTok{c}\NormalTok{(}
+  \FloatTok{1.00}\NormalTok{, }\SpecialCharTok{{-}}\FloatTok{0.10}\NormalTok{,  }\FloatTok{0.20}\NormalTok{,  }\FloatTok{0.25}\NormalTok{, }\SpecialCharTok{{-}}\FloatTok{0.15}\NormalTok{,}
+ \SpecialCharTok{{-}}\FloatTok{0.10}\NormalTok{,  }\FloatTok{1.00}\NormalTok{,  }\FloatTok{0.05}\NormalTok{, }\SpecialCharTok{{-}}\FloatTok{0.10}\NormalTok{,  }\FloatTok{0.30}\NormalTok{,}
+  \FloatTok{0.20}\NormalTok{,  }\FloatTok{0.05}\NormalTok{,  }\FloatTok{1.00}\NormalTok{,  }\FloatTok{0.45}\NormalTok{,  }\FloatTok{0.10}\NormalTok{,}
+  \FloatTok{0.25}\NormalTok{, }\SpecialCharTok{{-}}\FloatTok{0.10}\NormalTok{,  }\FloatTok{0.45}\NormalTok{,  }\FloatTok{1.00}\NormalTok{,  }\FloatTok{0.05}\NormalTok{,}
+ \SpecialCharTok{{-}}\FloatTok{0.15}\NormalTok{,  }\FloatTok{0.30}\NormalTok{,  }\FloatTok{0.10}\NormalTok{,  }\FloatTok{0.05}\NormalTok{,  }\FloatTok{1.00}
+\NormalTok{), }\AttributeTok{nrow=}\DecValTok{5}\NormalTok{, }\AttributeTok{byrow=}\ConstantTok{TRUE}\NormalTok{)}
+\NormalTok{D }\OtherTok{\textless{}{-}} \FunctionTok{diag}\NormalTok{(sd)}
+\NormalTok{Sigma\_known }\OtherTok{\textless{}{-}}\NormalTok{ D }\SpecialCharTok{\%*\%}\NormalTok{ R }\SpecialCharTok{\%*\%}\NormalTok{ D   }\CommentTok{\# Σ conocida }
+\CommentTok{\# Muestra simulada}
+\NormalTok{n }\OtherTok{\textless{}{-}} \DecValTok{60}
+\NormalTok{mu\_true }\OtherTok{\textless{}{-}}\NormalTok{ mu0         }\CommentTok{\# para NO forzar rechazo}
+\NormalTok{datos }\OtherTok{\textless{}{-}} \FunctionTok{as.data.frame}\NormalTok{(MASS}\SpecialCharTok{::}\FunctionTok{mvrnorm}\NormalTok{(n, }\AttributeTok{mu=}\NormalTok{mu\_true, }\AttributeTok{Sigma=}\NormalTok{Sigma\_known))}
+\FunctionTok{names}\NormalTok{(datos) }\OtherTok{\textless{}{-}} \FunctionTok{names}\NormalTok{(mu0)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi})}
+\setcounter{enumi}{1}
+\tightlist
+\item
+  Análisis exploratorio y gráfico
+\end{enumerate}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{head}\NormalTok{(datos)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##   alcohol_pct metanol_mgL alcoholes_sup_mgL esteres_mgL acidez_gL
+## 1       38.79       69.06             169.3       106.9    0.9805
+## 2       41.14       90.20             173.8       153.7    1.0427
+## 3       40.07       80.62             298.4       205.9    1.8091
+## 4       39.27       70.57             185.7       180.9    0.8934
+## 5       40.08       19.13             192.0       178.7    0.9522
+## 6       40.17       88.17             320.4       188.0    1.9647
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{summary}\NormalTok{(datos)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##   alcohol_pct    metanol_mgL    alcoholes_sup_mgL  esteres_mgL   
+##  Min.   :38.5   Min.   :-10.2   Min.   : 46       Min.   : 49.3  
+##  1st Qu.:39.3   1st Qu.: 55.3   1st Qu.:160       1st Qu.:114.0  
+##  Median :39.8   Median : 72.0   Median :194       Median :139.1  
+##  Mean   :40.0   Mean   : 70.2   Mean   :204       Mean   :143.5  
+##  3rd Qu.:40.5   3rd Qu.: 88.7   3rd Qu.:247       3rd Qu.:179.2  
+##  Max.   :42.3   Max.   :116.0   Max.   :345       Max.   :236.3  
+##    acidez_gL    
+##  Min.   :0.545  
+##  1st Qu.:0.985  
+##  Median :1.297  
+##  Mean   :1.269  
+##  3rd Qu.:1.492  
+##  Max.   :2.115
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{summarytools}\SpecialCharTok{::}\FunctionTok{descr}\NormalTok{(datos)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Descriptive Statistics  
+## datos  
+## N: 60  
+## 
+##                     acidez_gL   alcohol_pct   alcoholes_sup_mgL   esteres_mgL   metanol_mgL
+## ----------------- ----------- ------------- ------------------- ------------- -------------
+##              Mean        1.27         39.99              203.77        143.52         70.19
+##           Std.Dev        0.37          0.94               65.61         41.62         26.45
+##               Min        0.55         38.55               45.96         49.33        -10.16
+##                Q1        0.98         39.29              159.81        112.82         55.10
+##            Median        1.30         39.84              193.65        139.08         71.96
+##                Q3        1.50         40.55              247.38        179.77         89.18
+##               Max        2.12         42.30              345.19        236.30        115.98
+##               MAD        0.41          0.90               68.98         47.88         24.99
+##               IQR        0.51          1.21               86.94         65.25         33.35
+##                CV        0.29          0.02                0.32          0.29          0.38
+##          Skewness        0.22          0.60                0.10          0.03         -0.55
+##       SE.Skewness        0.31          0.31                0.31          0.31          0.31
+##          Kurtosis       -0.68         -0.47               -0.52         -0.83          0.23
+##           N.Valid       60.00         60.00               60.00         60.00         60.00
+##                 N       60.00         60.00               60.00         60.00         60.00
+##         Pct.Valid      100.00        100.00              100.00        100.00        100.00
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Matriz de dispersión base}
+\FunctionTok{pairs}\NormalTok{(datos, }\AttributeTok{main =} \StringTok{"Matriz de dispersión (pares)"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{P1-pc1_files/figure-latex/unnamed-chunk-3-1.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Histogramas base}
+\NormalTok{op }\OtherTok{\textless{}{-}} \FunctionTok{par}\NormalTok{(}\AttributeTok{mfrow=}\FunctionTok{c}\NormalTok{(}\DecValTok{2}\NormalTok{,}\DecValTok{3}\NormalTok{))}
+\ControlFlowTok{for}\NormalTok{ (j }\ControlFlowTok{in} \DecValTok{1}\SpecialCharTok{:}\FunctionTok{ncol}\NormalTok{(datos)) \{}
+  \FunctionTok{hist}\NormalTok{(datos[[j]], }\AttributeTok{main =} \FunctionTok{paste}\NormalTok{(}\StringTok{"Hist:"}\NormalTok{, }\FunctionTok{names}\NormalTok{(datos)[j]), }\AttributeTok{xlab =} \FunctionTok{names}\NormalTok{(datos)[j], }\AttributeTok{col=}\StringTok{"gray"}\NormalTok{)}
+\NormalTok{\}}
+\FunctionTok{par}\NormalTok{(op)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{P1-pc1_files/figure-latex/unnamed-chunk-3-2.pdf}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi})}
+\setcounter{enumi}{2}
+\tightlist
+\item
+  Supuestos: normalidad uni/multivariada y atípicos
+\end{enumerate}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Univariado (Shapiro) y Lilliefors (nortest)}
+\NormalTok{ap\_shapiro }\OtherTok{\textless{}{-}} \FunctionTok{apply}\NormalTok{(datos, }\DecValTok{2}\NormalTok{, shapiro.test)}
+\NormalTok{ap\_lillie  }\OtherTok{\textless{}{-}} \FunctionTok{apply}\NormalTok{(datos, }\DecValTok{2}\NormalTok{, }\ControlFlowTok{function}\NormalTok{(x) nortest}\SpecialCharTok{::}\FunctionTok{lillie.test}\NormalTok{(x))}
+
+\CommentTok{\# Mostrar p{-}valores de forma compacta}
+\FunctionTok{cat}\NormalTok{(}\StringTok{"Shapiro univariado (p{-}valores):}\SpecialCharTok{\textbackslash{}n}\StringTok{"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Shapiro univariado (p-valores):
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{print}\NormalTok{(}\FunctionTok{sapply}\NormalTok{(ap\_shapiro, }\StringTok{\textasciigrave{}}\AttributeTok{[[}\StringTok{\textasciigrave{}}\NormalTok{, }\StringTok{"p.value"}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##       alcohol_pct       metanol_mgL alcoholes_sup_mgL       esteres_mgL 
+##           0.01889           0.14109           0.92799           0.48186 
+##         acidez_gL 
+##           0.46257
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{cat}\NormalTok{(}\StringTok{"}\SpecialCharTok{\textbackslash{}n}\StringTok{Lilliefors univariado (p{-}valores):}\SpecialCharTok{\textbackslash{}n}\StringTok{"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 
+## Lilliefors univariado (p-valores):
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{print}\NormalTok{(}\FunctionTok{sapply}\NormalTok{(ap\_lillie, }\StringTok{\textasciigrave{}}\AttributeTok{[[}\StringTok{\textasciigrave{}}\NormalTok{, }\StringTok{"p.value"}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##       alcohol_pct       metanol_mgL alcoholes_sup_mgL       esteres_mgL 
+##           0.02578           0.61236           0.33206           0.25165 
+##         acidez_gL 
+##           0.19589
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Multivariado (mshapiro sobre la transpuesta, como en clase)}
+\NormalTok{p\_mvn }\OtherTok{\textless{}{-}} \FunctionTok{tryCatch}\NormalTok{(mvnormtest}\SpecialCharTok{::}\FunctionTok{mshapiro.test}\NormalTok{(}\FunctionTok{t}\NormalTok{(}\FunctionTok{as.matrix}\NormalTok{(datos)))}\SpecialCharTok{$}\NormalTok{p.value, }\AttributeTok{error=}\ControlFlowTok{function}\NormalTok{(e) }\ConstantTok{NA\_real\_}\NormalTok{)}
+\FunctionTok{cat}\NormalTok{(}\StringTok{"}\SpecialCharTok{\textbackslash{}n}\StringTok{Shapiro multivariado p{-}value:"}\NormalTok{, p\_mvn, }\StringTok{"}\SpecialCharTok{\textbackslash{}n}\StringTok{"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 
+## Shapiro multivariado p-value: 0.02548
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Outliers por Mahalanobis (97.5\%)}
+\NormalTok{d2  }\OtherTok{\textless{}{-}} \FunctionTok{mahalanobis}\NormalTok{(datos, }\FunctionTok{colMeans}\NormalTok{(datos), }\FunctionTok{cov}\NormalTok{(datos))}
+\NormalTok{cut }\OtherTok{\textless{}{-}} \FunctionTok{qchisq}\NormalTok{(}\FloatTok{0.975}\NormalTok{, }\AttributeTok{df =} \FunctionTok{ncol}\NormalTok{(datos))}
+\NormalTok{idx\_out }\OtherTok{\textless{}{-}} \FunctionTok{which}\NormalTok{(d2 }\SpecialCharTok{\textgreater{}}\NormalTok{ cut)}
+\FunctionTok{cat}\NormalTok{(}\StringTok{"}\SpecialCharTok{\textbackslash{}n}\StringTok{Índices potencialmente atípicos:"}\NormalTok{, }\FunctionTok{ifelse}\NormalTok{(}\FunctionTok{length}\NormalTok{(idx\_out)}\SpecialCharTok{==}\DecValTok{0}\NormalTok{,}\StringTok{"(ninguno)"}\NormalTok{, }\FunctionTok{paste}\NormalTok{(idx\_out, }\AttributeTok{collapse=}\StringTok{", "}\NormalTok{)), }\StringTok{"}\SpecialCharTok{\textbackslash{}n}\StringTok{"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 
+## Índices potencialmente atípicos: 44
+\end{verbatim}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi})}
+\setcounter{enumi}{3}
+\tightlist
+\item
+  Prueba Z² con Σ conocida
+\end{enumerate}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Parámetros}
+\NormalTok{p }\OtherTok{\textless{}{-}} \FunctionTok{ncol}\NormalTok{(datos)                       }\CommentTok{\# número de variables}
+\NormalTok{mu }\OtherTok{\textless{}{-}}\NormalTok{ mu0                              }\CommentTok{\# vector de medias bajo H0 (nomenclatura del profe)}
+\NormalTok{sigma }\OtherTok{\textless{}{-}}\NormalTok{ Sigma\_known                   }\CommentTok{\# matriz Σ conocida (nomenclatura del profe)}
+
+\CommentTok{\# Media muestral}
+\NormalTok{media\_muestral }\OtherTok{\textless{}{-}} \FunctionTok{colMeans}\NormalTok{(datos)}
+
+\CommentTok{\# Estadístico Z\^{}2 (equivalente a n*(xbar{-}mu)\textquotesingle{} Σ\^{}\{{-}1\} (xbar{-}mu))}
+\NormalTok{Z2 }\OtherTok{\textless{}{-}} \FunctionTok{t}\NormalTok{(media\_muestral }\SpecialCharTok{{-}}\NormalTok{ mu) }\SpecialCharTok{\%*\%} \FunctionTok{solve}\NormalTok{(sigma }\SpecialCharTok{/}\NormalTok{ n) }\SpecialCharTok{\%*\%}\NormalTok{ (media\_muestral }\SpecialCharTok{{-}}\NormalTok{ mu)}
+
+\CommentTok{\# p{-}valor (chi{-}cuadrado con p g.l.)}
+\NormalTok{p\_valor }\OtherTok{\textless{}{-}} \DecValTok{1} \SpecialCharTok{{-}} \FunctionTok{pchisq}\NormalTok{(Z2, }\AttributeTok{df =}\NormalTok{ p)}
+
+\CommentTok{\# Resultados y decisión (α=0.05)}
+\FunctionTok{cat}\NormalTok{(}\StringTok{"}\SpecialCharTok{\textbackslash{}n}\StringTok{Estadística Z\^{}2:"}\NormalTok{, }\FunctionTok{as.numeric}\NormalTok{(Z2), }\StringTok{"}\SpecialCharTok{\textbackslash{}n}\StringTok{"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 
+## Estadística Z^2: 2.68
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{cat}\NormalTok{(}\StringTok{"p{-}valor:"}\NormalTok{, }\FunctionTok{as.numeric}\NormalTok{(p\_valor), }\StringTok{"}\SpecialCharTok{\textbackslash{}n}\StringTok{"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## p-valor: 0.7491
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ControlFlowTok{if}\NormalTok{ (p\_valor }\SpecialCharTok{\textless{}} \FloatTok{0.05}\NormalTok{) \{}
+  \FunctionTok{cat}\NormalTok{(}\StringTok{"Decisión: Rechazar H0 (el vector de medias difiere de μ0).}\SpecialCharTok{\textbackslash{}n}\StringTok{"}\NormalTok{)}
+\NormalTok{\} }\ControlFlowTok{else}\NormalTok{ \{}
+  \FunctionTok{cat}\NormalTok{(}\StringTok{"Decisión: No se rechaza H0 (no hay evidencia suficiente de diferencia).}\SpecialCharTok{\textbackslash{}n}\StringTok{"}\NormalTok{)}
+\NormalTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Decisión: No se rechaza H0 (no hay evidencia suficiente de diferencia).
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Tamaño de efecto (distancia de Mahalanobis de medias)}
+\NormalTok{d\_M }\OtherTok{\textless{}{-}} \FunctionTok{sqrt}\NormalTok{(}\FunctionTok{as.numeric}\NormalTok{(Z2) }\SpecialCharTok{/}\NormalTok{ n)}
+\FunctionTok{cat}\NormalTok{(}\StringTok{"d\_M (Mahalanobis de la media) ="}\NormalTok{, }\FunctionTok{round}\NormalTok{(d\_M, }\DecValTok{4}\NormalTok{), }\StringTok{"}\SpecialCharTok{\textbackslash{}n}\StringTok{"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## d_M (Mahalanobis de la media) = 0.2114
+\end{verbatim}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi})}
+\setcounter{enumi}{4}
+\tightlist
+\item
+  Conclusiones
+\end{enumerate}
+
+\end{document}

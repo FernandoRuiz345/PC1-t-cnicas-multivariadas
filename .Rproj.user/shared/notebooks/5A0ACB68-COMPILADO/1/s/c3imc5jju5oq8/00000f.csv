@@ -1,0 +1,86 @@
+"0","pacman::p_load(tidyverse,mvnormtest,biotools,"
+"0","               ICSNP,Hotelling,summarytools,"
+"0","               ggpubr,MASS,ICSNP,ergm,rrcov)"
+"2","Installing package into ‘C:/Users/fejor/AppData/Local/R/win-library/4.4’
+(as ‘lib’ is unspecified)
+"
+"2","also installing the dependencies ‘purrr’, ‘rlang’
+
+"
+"2","Aviso: downloaded length 0 != reported length 281"
+"2","Aviso: cannot open URL 'https://www.stats.ox.ac.uk/pub/RWin/bin/windows/contrib/4.4/PACKAGES.rds': HTTP status was '404 Not Found'"
+"2","Aviso: downloaded length 0 != reported length 281"
+"2","Aviso: cannot open URL 'https://www.stats.ox.ac.uk/pub/RWin/bin/windows/contrib/4.4/PACKAGES.gz': HTTP status was '404 Not Found'"
+"2","Aviso: downloaded length 0 != reported length 281"
+"2","Aviso: cannot open URL 'https://www.stats.ox.ac.uk/pub/RWin/bin/windows/contrib/4.4/PACKAGES': HTTP status was '404 Not Found'"
+"2","Aviso: unable to access index for repository http://www.stats.ox.ac.uk/pub/RWin/bin/windows/contrib/4.4:
+  cannot open URL 'http://www.stats.ox.ac.uk/pub/RWin/bin/windows/contrib/4.4/PACKAGES'"
+"2","trying URL 'https://cran.rstudio.com/bin/windows/contrib/4.4/purrr_1.1.0.zip'
+"
+"2","Content type 'application/zip'"
+"2"," length 568071 bytes (554 KB)
+"
+"2","downloaded 554 KB
+
+"
+"2","trying URL 'https://cran.rstudio.com/bin/windows/contrib/4.4/rlang_1.1.6.zip'
+"
+"2","Content type 'application/zip'"
+"2"," length 1628759 bytes (1.6 MB)
+"
+"2","downloaded 1.6 MB
+
+"
+"2","trying URL 'https://cran.rstudio.com/bin/windows/contrib/4.4/ergm_4.10.1.zip'
+"
+"2","Content type 'application/zip'"
+"2"," length 3133514 bytes (3.0 MB)
+"
+"2","downloaded 3.0 MB
+
+"
+"1","package ‘purrr’ successfully unpacked and MD5 sums checked
+"
+"2","Aviso: cannot remove prior installation of package ‘purrr’"
+"2","Aviso: problem copying C:\Users\fejor\AppData\Local\R\win-library\4.4\00LOCK\purrr\libs\x64\purrr.dll to C:\Users\fejor\AppData\Local\R\win-library\4.4\purrr\libs\x64\purrr.dll: Permission denied"
+"2","Aviso: restored ‘purrr’"
+"1","package ‘rlang’ successfully unpacked and MD5 sums checked
+"
+"2","Aviso: cannot remove prior installation of package ‘rlang’"
+"2","Aviso: problem copying C:\Users\fejor\AppData\Local\R\win-library\4.4\00LOCK\rlang\libs\x64\rlang.dll to C:\Users\fejor\AppData\Local\R\win-library\4.4\rlang\libs\x64\rlang.dll: Permission denied"
+"2","Aviso: restored ‘rlang’"
+"1","package ‘ergm’ successfully unpacked and MD5 sums checked
+"
+"1","
+"
+"1",""
+"1","The downloaded binary packages are in
+	C:\Users\fejor\AppData\Local\Temp\Rtmp0MhjJN\downloaded_packages"
+"1",""
+"1","
+"
+"2","
+ergm installed
+"
+"2","Aviso: package ‘ergm’ was built under R version 4.4.3"
+"2","Aviso: Failed to install/load:
+ergm"
+"0","set.seed(777)"
+"0",""
+"0","# Simulación"
+"0","nA <- 28; nB <- 32"
+"0","muA <- c(100, 140)"
+"0","muB <- c(95, 150)"
+"0",""
+"0","SigmaA <- matrix(c(225, 60,"
+"0","                   60, 400), 2, 2, byrow=TRUE)"
+"0","SigmaB <- matrix(c(196, 30,"
+"0","                   30, 625), 2, 2, byrow=TRUE)"
+"0",""
+"0","A <- mvrnorm(nA, muA, SigmaA)"
+"0","B <- mvrnorm(nB, muB, SigmaB)"
+"0",""
+"0","datos2 <- bind_rows("
+"0","  tibble(Grupo=""TratA"", Glucosa=A[,1], Trigliceridos=A[,2]),"
+"0","  tibble(Grupo=""TratB"", Glucosa=B[,1], Trigliceridos=B[,2])"
+"0",") %>% mutate(Grupo=factor(Grupo))"

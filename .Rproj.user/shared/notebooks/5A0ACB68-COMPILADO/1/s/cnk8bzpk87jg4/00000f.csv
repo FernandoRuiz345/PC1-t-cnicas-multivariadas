@@ -1,0 +1,3 @@
+"0","library(readxl)"
+"0","datos4 <- read_excel(""datos_cafe_7rep_final.xlsx"")"
+"0","head(datos4)"

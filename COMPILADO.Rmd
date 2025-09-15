@@ -1,0 +1,36 @@
+---
+output: word_document
+---
+
+**UNIVERSIDAD NACIONAL AGRARIA LA MOLINA**
+
+**FACULTAD DE ECONOMÍA Y PLANIFICACIÓN**
+
+**DEPARTAMENTO DE ESTADÍSTICA**
+
+```{r echo=F,out.width="200px"}
+knitr::include_graphics("escudo agraria.jpg")
+```
+
+**Curso:** Tecnicas multivariadas
+
+**Profesor:** Miranda Villagomez Clodomiro Fernando
+  
+**Integrantes:**  
+
+  - "Coronado de la Vega Alonso     20221395"
+  - "Delgado Conzuero Nathaly Sadith     20201406"
+  - "Enciso Condori Jorge Luis     20230392"
+  - "Gómez Vigo Héctor Estéfano     20230397"
+  - "Kawano Villavicencio Wesley Kazuki     20190362"
+  - "Mercedes Sanchez Manuel Antonio     20190304"
+  - "Ruiz Macedo Fernando Jose     20211830"
+
+**LA MOLINA**
+
+**LIMA – PERÚ**
+
+**2025**
+
+
+\newpage

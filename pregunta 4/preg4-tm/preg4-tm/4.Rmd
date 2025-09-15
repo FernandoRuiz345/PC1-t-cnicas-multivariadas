@@ -1,0 +1,309 @@
+---
+title: "MANOVA en DCA"
+author: "4"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Introducción
+
+En este análisis se evaluaron 7 híbridos de café con 7 repeticiones cada
+uno, considerando las siguientes variables dependientes:
+
++-------------------+---------------------------+----------------------+
+| Variable          | Descripción               | Unidad               |
++===================+===========================+======================+
+| rendimiento       | Producción obtenida       | kg/planta            |
++-------------------+---------------------------+----------------------+
+| altura_planta     | Altura de la planta       | cm                   |
++-------------------+---------------------------+----------------------+
+| diametro_fruto    | Diámetro promedio fruto   | mm                   |
++-------------------+---------------------------+----------------------+
+| largo_fruto       | Longitud promedio fruto   | mm                   |
++-------------------+---------------------------+----------------------+
+| peso_grano        | Peso promedio de grano    | g                    |
++-------------------+---------------------------+----------------------+
+| contenido_cafeina | Contenido de cafeína      | %                    |
++-------------------+---------------------------+----------------------+
+
+
+# 1. Lectura de datos
+```{r}
+
+library(readxl)
+datos <- read_excel("datos_cafe_7rep_final.xlsx")
+head(datos)
+```
+
+# 2. Verificación de supuestos
+
+## 2.1 Normalidad multivariada por grupo
+```{r}
+library(tidyverse)
+library(mvnormtest)
+
+# --- Normalidad multivariada por grupo ---
+# Se usa mshapiro.test() en cada híbrido.
+# H0: los datos del grupo siguen una distribución normal multivariada.
+
+trat1 = datos %>% filter(Hibrido == "Hibrido1") %>%
+  dplyr::select(rendimiento, altura_planta, diametro_fruto, largo_fruto, peso_grano, contenido_cafeina)
+trat2 = datos %>% filter(Hibrido == "Hibrido2") %>%
+  dplyr::select(rendimiento, altura_planta, diametro_fruto, largo_fruto, peso_grano, contenido_cafeina)
+trat3 = datos %>% filter(Hibrido == "Hibrido3") %>%
+  dplyr::select(rendimiento, altura_planta, diametro_fruto, largo_fruto, peso_grano, contenido_cafeina)
+trat4 = datos %>% filter(Hibrido == "Hibrido4") %>%
+  dplyr::select(rendimiento, altura_planta, diametro_fruto, largo_fruto, peso_grano, contenido_cafeina)
+trat5 = datos %>% filter(Hibrido == "Hibrido5") %>%
+  dplyr::select(rendimiento, altura_planta, diametro_fruto, largo_fruto, peso_grano, contenido_cafeina)
+trat6 = datos %>% filter(Hibrido == "Hibrido6") %>%
+  dplyr::select(rendimiento, altura_planta, diametro_fruto, largo_fruto, peso_grano, contenido_cafeina)
+trat7 = datos %>% filter(Hibrido == "Hibrido7") %>%
+  dplyr::select(rendimiento, altura_planta, diametro_fruto, largo_fruto, peso_grano, contenido_cafeina)
+
+mshapiro.test(t(trat1))
+mshapiro.test(t(trat2))
+mshapiro.test(t(trat3))
+mshapiro.test(t(trat4))
+mshapiro.test(t(trat5))
+mshapiro.test(t(trat6))
+mshapiro.test(t(trat7))
+```
+
+Comentario:
+- En todos los híbridos, la prueba de Shapiro multivariada rechaza la normalidad.
+- Esto es muy frecuente en datos agronómicos.
+- El MANOVA es robusto, pero se considera transformaciones.
+
+## 2.2 Homogeneidad de matrices de covarianza (Box's M)
+```{r}
+# Supuesto de homogeneidad de matrices variancia covariancia
+library(heplots)
+X <-  datos[c(2,3,4,5,6,7)]
+
+datos$Hibrido <- as.factor(datos$Hibrido)
+
+res <- boxM(X, datos$Hibrido)
+res
+summary(res)
+
+heplots::boxM(cbind(rendimiento, altura_planta, diametro_fruto, largo_fruto, peso_grano, contenido_cafeina) ~ Hibrido, data = datos)
+
+library(biotools)
+resultado <- boxM(X, datos$Hibrido)
+print(resultado)
+
+library(covTestR)
+cafe <- unique(datos$Hibrido)
+cafe1 <- lapply(cafe,
+                function(x){as.matrix(datos[datos$Hibrido == x, 2:7])}
+)
+names(cafe1) <- cafe
+Ahmad2017(cafe1)
+
+## Prueba Wrapper
+homogeneityCovariances(datos, group = Hibrido, covTest = BoxesM)
+
+library(DFA.CANCOR)
+HOMOGENEITY(data = datos,groups = 'Hibrido', 
+            variables = c('rendimiento','altura_planta','diametro_fruto','largo_fruto','peso_grano',"contenido_cafeina"))
+
+```
+
+- La prueba de BoxM resultó significativa, indicando que las matrices de varianza-covarianza no son iguales entre los híbridos. Esto viola el supuesto de homogeneidad, pero al tener el mismo número de repeticiones por grupo (n=7), el MANOVA aún es válido.
+- Entre las pruebas, la de Pillai suele ser la más robusta en este escenario.
+
+## 2.3 Correlación entre variables dependientes correlacionadas (Bartlett)
+
+```{r}
+ 
+library(psych)
+options(scipen = 0)
+cortest.bartlett(cor(datos[, -1]), n = nrow(datos[, -1]))
+
+library(MVTests)
+res1 = Bsper(datos[, -1])
+summary(res1)
+```
+
+Comentario:
+
+- El test de esfericidad de Bartlett es significativo, confirmando que las variables dependientes están correlacionadas entre sí. Esto justifica el uso de un MANOVA en lugar de ANOVAs separados.
+
+# 3. Trabajando con el modelo de MANOVA en DCA 
+
+```{r}
+modelo = manova(cbind(rendimiento, altura_planta, diametro_fruto, largo_fruto, peso_grano, contenido_cafeina) ~ Hibrido, data = datos)
+```
+- Determinación de la matriz residual y la matriz factorial del MANOVA.
+
+```{r}
+str(modelo)
+Matrices = summary(modelo)$SS
+F = Matrices$Hibrido
+W = Matrices$Residuals
+```
+
+- Variabilidad explicada por el factor (Tratamientos). Matriz suma de cuadrados y productos cruzados del factor (SCOCF)
+```{r}
+F
+```
+- Variabilidad residual. Matriz suma de cuadrados y productos cruzados del residual (SCOCR)
+
+```{r}
+W
+```
+
+- Variabilidad Total. Matriz suma de cuadrados y productos cruzados total (SCOCT) del factor 
+```{r}
+T = F + W
+T
+```
+
+- Bondad de ajuste. Un valor proximo a 1 indica que la mayor parte de la variabilidad total puede atribuirse al factor, mientras que un valor proximo a 0 significa que el factor explica muy poco de esa variabilidad total.
+```{r}
+eta2 = 1 - det(W)/det(T)
+eta2
+det(F)/det(T) 
+```
+
+El valor de eta2 obtenido es elevado, lo que indica que los híbridos explican una proporción importante de la variabilidad total de los datos. Esto da un respaldo fuerte a la significancia del modelo MANOVA.
+
+- Pruebas de hipotesis del modelo. Calculo de contrastes del modelo
+
+- Contrastes del modelo en relacion a los supuestos. Todos los estadisticos son bastante robustos ante violaciones de normalidad,y la prueba de Roy es muy sensible a violaciones de la hipotesis de la matriz de covariancias. Cuando las muestras son iguales por
+#grupo, la prueba de Pillai es el estadistico más robusto ante violaciones de los supuestos.
+
+```{r}
+k = 7 #numero de grupos
+p = 6 #numero de variables
+n = 7 #numero de observaciones por grupo
+datosc1 = datos
+head(datosc1)
+datosc1$Hibrido <- as.numeric(datosc1$Hibrido)
+str(datosc1)
+
+VMPG = matrix(NA, k, p) #vector de medias por grupo
+for(i in 1:k){
+  VMPG[i,]=colMeans(datos[datosc1$Hibrido == i, -1])
+}
+VMPG #cada fila es un vector de medias
+``` 
+
+```{r}
+#Computar B
+(B=n*(k-1)*cov(VMPG))
+# Tambien
+n*(t(VMPG)-colMeans(VMPG))%*%t(t(VMPG)-colMeans(VMPG))
+
+# Computar W
+W = (n-1)*cov(datos[datosc1$Hibrido == 1, -1])
+for(i in 2:k){
+  W = W + (n-1)*cov(datos[datosc1$Hibrido == 1, -1])
+}
+W
+W+B
+
+## autovalores de W^{-1}B
+(lambdas = eigen(solve(W)%*%B)$values)
+
+##traza de pillai
+sum(lambdas/(1+lambdas))
+#tambien
+sum(diag(solve(W+B)%*%B))
+```
+
+- El software R obtiene un valor calculado de pillai diferente al que se calculó manualmente, esto se debe a que hay varias formas de calcular este valor.
+```{r}
+summary(modelo, test = "Pillai")
+1-pf(2.2491, 36,252)
+
+##Lambda de Wilks
+det(W)/det(W + B)
+#tambien
+prod(1/(1 + lambdas))
+```
+
+- El software R obtiene un valor calculado diferente al que se calculó manualmente, esto se debe a que hay varias formas de calcular este valor.
+```{r}
+summary(modelo, test = "Wilks")
+1-pf(2.5341, 36,165.24)
+
+## Lawley Hotelling
+LH = sum(lambdas)
+LH
+
+summary(modelo, test = "Hotelling-Lawley")
+1-pf(2.681, 36,212)
+
+## Raiz mayor de Roy
+lambdas[1]/(1 + lambdas[1])
+summary(modelo, test = "Roy")
+1-pf( 9.0125, 6, 42)
+```
+
+Conclusión:
+- Todas las pruebas multivariadas (Pillai, Wilks, Hotelling-Lawley y Roy) resultaron significativas.
+- Esto confirma que los vectores de medias de los híbridos no son iguales. Es decir, los híbridos difieren de manera global en las variables evaluadas.
+- Se observa que las variables rendimiento y altura de planta resultaron altamente significativas,lo que indica que contribuyen de manera importante al rechazo de la hipótesis nula.
+- Diámetro de fruto y cafeína muestran tendencia a significancia, mientras que largo de fruto y peso de grano no muestran diferencias claras.
+
+# 4. Resultados univariados
+## 4.1 ANOVA por variable
+```{r}
+ 
+summary.aov(modelo)
+```
+
+Comentario:
+
+- Rendimiento y altura_planta -->altamente significativos.
+
+- Diámetro_fruto y cafeína -->tendencia a la significancia.
+
+- Largo_fruto y peso_grano--> no significativos.
+
+# 5. Comparaciones múltiples
+## 5.1 Comparaciones por pares entre híbridos
+```{r}
+modelo1 = manova(cbind(rendimiento, altura_planta, diametro_fruto, largo_fruto, peso_grano, contenido_cafeina) ~ Hibrido, data = datos,
+                 subset = Hibrido %in% c("Hibrido1","Hibrido2"))
+
+summary(modelo1,test="Pillai")
+summary(modelo1,test="Wilks")
+summary(modelo1,test="Hotelling-Lawley")
+summary(modelo1,test="Roy")
+summary.aov(modelo1)
+```
+Comentario:
+
+- En la comparación directa entre Hibrido1 y Hibrido2 también se encontraron diferencias significativas.Esto respalda que la diferenciación no solo es global, sino que algunos pares difieren claramente.
+
+## 5.2 Comparaciones por pares entre híbridos
+
+
+- H0:los 2 vectores de promedios son iguales
+- H1:los 2 vectores de promedios difieren
+
+```{r}
+Prueba <- c("Hibrido1", "Hibrido2", "Hibrido3", "Hibrido4", "Hibrido5", "Hibrido6","Hibrido7")
+comb<-t(combn(length(Prueba) , 2))
+
+for(i in 1:nrow(comb)){
+  modelo.comp = manova(cbind(rendimiento, altura_planta, diametro_fruto, largo_fruto, peso_grano, contenido_cafeina) ~ Hibrido, data=datos,
+                       subset = Hibrido %in% Prueba[comb[i,]])
+  print(paste("Prueba: ", Prueba[comb[i,]][1], "y", Prueba[comb[i,]][2]))
+  print(summary(modelo.comp, test = "Pillai"))
+  cat("\n")
+  
+}
+```
+
+Conclusión:
+
+- Se concluye que no todos los híbridos son iguales entre sí, ya que varias comparaciones por pares resultaron significativas. En particular, el Híbrido4 presenta diferencias claras con la mayoría de los otros híbridos, mientras que otros (como Híbrido6 y Híbrido7) no mostraron diferencias notorias respecto a la mayoría.
+

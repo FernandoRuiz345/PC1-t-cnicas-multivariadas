@@ -1,0 +1,172 @@
+---
+title: "PC1_Ejercicio 3"
+author: "wesley"
+date: "2025-09-14"
+output: html_document
+---
+
+# Ejercicio 3 – Hotelling T² con Muestras Independientes
+
+## 1. Muestras
+
+Comparación de dos tratamientos farmacológicos (**TratA** vs **TratB**) en dos marcadores bioquímicos: **Glucosa** y **Triglicéridos** (mg/dL).  
+
+- $n(TratA) = 28$  
+- $n(TratB) = 32$  
+
+
+## 2. Carga de Librerías y Simulación de Datos
+
+```{r setup, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(mvnormtest)   # mshapiro.test
+library(biotools)     # BoxM / boxM
+library(ICSNP)        # approx.hotelling.diff.test, HotellingsT2, T2.test
+library(Hotelling)    # hotelling.test
+library(summarytools)
+library(ggpubr)
+library(MASS)
+library(ICSNP)
+library(ergm)
+library(rrcov)
+
+set.seed(777)
+
+# Simulación
+nA <- 28; nB <- 32
+muA <- c(100, 140)
+muB <- c(95, 150)
+
+SigmaA <- matrix(c(225, 60,
+                   60, 400), 2, 2, byrow=TRUE)
+SigmaB <- matrix(c(196, 30,
+                   30, 625), 2, 2, byrow=TRUE)
+
+A <- mvrnorm(nA, muA, SigmaA)
+B <- mvrnorm(nB, muB, SigmaB)
+
+datos2 <- bind_rows(
+  tibble(Grupo="TratA", Glucosa=A[,1], Trigliceridos=A[,2]),
+  tibble(Grupo="TratB", Glucosa=B[,1], Trigliceridos=B[,2])
+) %>% mutate(Grupo=factor(Grupo))
+
+```
+
+## 3. Supuesto de Normalidad Multivariada
+
+### Hipótesis
+
+$H_0:$ Cada grupo sigue una distribución normal multivariada.
+
+$H_1:$ Alguno de los grupos no sigue normalidad multivariada.
+
+
+```{r}
+X <- filter(datos2, Grupo=="TratA")[,2:3]
+Y <- filter(datos2, Grupo=="TratB")[,2:3]
+
+mshapiro.test(t(as.matrix(X)))
+mshapiro.test(t(as.matrix(Y)))
+```
+
+### Conclusión
+
+Con  
+
+$𝑝> 0.05$
+
+$𝑝> 0.05$ en caso X, no se rechaza $H_0$
+
+Se asume normalidad multivariada en los dos tratamientos.
+
+
+## 4. Supuesto de Homogeneidad de Matrices de Covarianza
+
+### Hipótesis
+
+$H_0: \sum_{TratA} = \sum_{TratB}$.
+
+$H_1: \sum_{TratA} \neq  \sum_{TratB}$.
+
+
+```{r}
+results <- boxM(data=datos2[,2:3], group=datos2$Grupo)
+summary(results)
+```
+### Conclusión:
+
+Se obtiene $p < 0.05$, por lo tanto se rechaza $H_0$.
+
+No se cumple la homogeneidad de covarianzas.
+
+
+
+## 5. Prueba de Hotelling T² (independientes, varianzas desiguales)
+
+### Hipótesis
+
+$H_0: \mu_{TratA} = \mu_{TratB}$.
+
+$H_1: \mu_{TratA} \neq  \mu_{TratB}$.
+
+```{r}
+ht2_welch <- approx.hotelling.diff.test(X, Y, mu0=c(0,0),
+                                        assume.indep=TRUE, var.equal=FALSE)
+ht2_welch
+
+```
+
+### Conclusión:
+
+El $p-valor < 0.05$ → se rechaza $H_0$.
+
+Existe diferencia significativa en la combinación promedio de Glucosa y Triglicéridos entre TratA y TratB.
+
+
+## 6. Hipótesis con Vector Específico $\mu_0 = (5, -10)$
+
+### Hipótesis:
+
+$H_0: \mu_{TratA} - \mu_{TratB} = (5, -10) $.
+
+$H_1: \mu_{TratA} - \mu_{TratB} \neq  (5, -10)$.
+
+```{r}
+approx.hotelling.diff.test(X, Y, mu0=c(5,-10),
+                           assume.indep=TRUE, var.equal=FALSE)
+
+```
+
+### Conclusión:
+
+El $p-valor < 0.05$ → se rechaza $H_0$.
+
+La diferencia observada no coincide con el vector específico planteado.
+
+
+## 7. Prueba Robusta T² (solo $\mu = 0$)
+
+### Hipótesis:
+
+$H_0: \mu_{TratA} - \mu_{TratB} = (0, 0) $.
+
+$H_1: \mu_{TratA} - \mu_{TratB} \neq  (0, 0)$.
+
+```{r}
+T2.test(X, Y, mu=rep(0,2), method="c")
+```
+
+### Conclusión:
+
+El test robusto confirma la diferencia multivariada entre los grupos.
+
+
+## 8. Sintesis General
+
+- Se cumple el supuesto de normalidad multivariada.
+- No se cumple la homogeneidad de covarianzas
+- Con la prueba de Hotelling T² (varianzas desiguales) se obtiene $p < 0.05$, indicando diferencias significativas.
+- La prueba robusta también confirma las diferencias.
+
+-> Los tratamientos A y B presentan diferencias significativas en los niveles conjuntos de Glucosa y Triglicéridos.
+

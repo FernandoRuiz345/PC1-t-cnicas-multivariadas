@@ -1,0 +1,169 @@
+---
+title: "PC1 – P1: Prueba Z² con Σ conocida"
+subtitle: "Composición química de un licor: pisco (5 variables)"
+author: "Equipo — Responsable P1: Héctor Gómez"
+output:
+  html_document:
+    toc: true
+    toc_depth: 3
+encoding: UTF-8
+---
+
+```{r, echo = FALSE, warning=FALSE}
+suppressPackageStartupMessages({
+  library(MASS)          # mvrnorm
+  library(summarytools)  # descr
+  library(nortest)       # lillie.test
+  library(mvnormtest)    # mshapiro.test
+  # library(BSDA)        
+})
+options(digits = 4)
+```
+
+
+### **1) Datos y parámetros conocidos**
+```{r}
+set.seed(123)
+
+# Vector objetivo (bajo H0)
+mu0 <- c(40, 80, 200, 160, 1.20)
+names(mu0) <- c("alcohol_pct","metanol_mgL","alcoholes_sup_mgL","esteres_mgL","acidez_gL")
+
+# Desv. estándar y correlaciones
+sd <- c(1.0, 35, 70, 50, 0.35)
+R  <- matrix(c(
+  1.00, -0.10,  0.20,  0.25, -0.15,
+ -0.10,  1.00,  0.05, -0.10,  0.30,
+  0.20,  0.05,  1.00,  0.45,  0.10,
+  0.25, -0.10,  0.45,  1.00,  0.05,
+ -0.15,  0.30,  0.10,  0.05,  1.00
+), nrow=5, byrow=TRUE)
+D <- diag(sd)
+Sigma_known <- D %*% R %*% D   # Σ conocida 
+# Muestra simulada
+n <- 150
+mu_true <- mu0         # para NO forzar rechazo
+datos <- as.data.frame(MASS::mvrnorm(n, mu=mu_true, Sigma=Sigma_known))
+names(datos) <- names(mu0)
+```
+
+### **2) Análisis exploratorio y gráfico**
+
+```{r}
+head(datos)
+summary(datos)
+summarytools::descr(datos)
+
+# Matriz de dispersión base
+pairs(datos, main = "Matriz de dispersión (pares)")
+
+# Histogramas base
+op <- par(mfrow=c(2,3))
+for (j in 1:ncol(datos)) {
+  hist(datos[[j]], main = paste("Hist:", names(datos)[j]), xlab = names(datos)[j], col="gray")
+}
+par(op)
+
+library(corrplot)
+
+# Boxplots para cada variable
+op <- par(mfrow=c(2,3))
+for (j in 1:ncol(datos)) {
+  boxplot(datos[[j]], main=paste("Boxplot:", names(datos)[j]), col="lightblue")
+}
+par(op)
+
+# Matriz de correlaciones (visual)
+corrplot(cor(datos), method = "ellipse", tl.cex = 0.8)
+
+# Curvas de densidad
+op <- par(mfrow=c(2,3))
+for (j in 1:ncol(datos)) {
+  plot(density(datos[[j]]), main=paste("Densidad:", names(datos)[j]), col="blue", lwd=2)
+}
+par(op)
+```
+
+### **3) Supuestos: normalidad uni/multivariada y atípicos**
+
+```{r}
+# Univariado (Shapiro) y Lilliefors (nortest)
+ap_shapiro <- apply(datos, 2, shapiro.test)
+ap_lillie  <- apply(datos, 2, function(x) nortest::lillie.test(x))
+
+# Mostrar p-valores de forma compacta
+cat("Shapiro univariado (p-valores):\n")
+print(sapply(ap_shapiro, `[[`, "p.value"))
+cat("\nLilliefors univariado (p-valores):\n")
+print(sapply(ap_lillie, `[[`, "p.value"))
+
+# Multivariado (mshapiro)
+p_mvn <- tryCatch(mvnormtest::mshapiro.test(t(as.matrix(datos)))$p.value, error=function(e) NA_real_)
+cat("\nShapiro multivariado p-value:", p_mvn, "\n")
+
+# Outliers por Mahalanobis (97.5%)
+d2  <- mahalanobis(datos, colMeans(datos), cov(datos))
+cut <- qchisq(0.975, df = ncol(datos))
+idx_out <- which(d2 > cut)
+cat("\nÍndices potencialmente atípicos:", ifelse(length(idx_out)==0,"(ninguno)", paste(idx_out, collapse=", ")), "\n")
+
+plot(d2, main="Distancias de Mahalanobis", ylab="d²", pch=19)
+abline(h=cut, col="red", lwd=2, lty=2)
+text(idx_out, d2[idx_out], labels=idx_out, pos=3, col="red")
+```
+
+### **4) Prueba Z² con Σ conocida**
+
+```{r}
+# Parámetros
+p <- ncol(datos)                       # número de variables
+mu <- mu0                              # vector de medias bajo H0 
+sigma <- Sigma_known                   # matriz Σ conocida
+
+# Media muestral
+media_muestral <- colMeans(datos)
+
+# Estadístico Z^2 (equivalente a n*(xbar-mu)' Σ^{-1} (xbar-mu))
+Z2 <- t(media_muestral - mu) %*% solve(sigma / n) %*% (media_muestral - mu)
+
+# p-valor (chi-cuadrado con p g.l.)
+p_valor <- 1 - pchisq(Z2, df = p)
+
+# Resultados y decisión (α=0.05)
+cat("\nEstadística Z^2:", as.numeric(Z2), "\n")
+cat("p-valor:", as.numeric(p_valor), "\n")
+if (p_valor < 0.05) {
+  cat("Decisión: Rechazar H0 (el vector de medias difiere de μ0).\n")
+} else {
+  cat("Decisión: No se rechaza H0 (no hay evidencia suficiente de diferencia).\n")
+}
+
+# Tamaño de efecto (distancia de Mahalanobis de medias)
+d_M <- sqrt(as.numeric(Z2) / n)
+cat("d_M (Mahalanobis de la media) =", round(d_M, 4), "\n")
+
+resultados <- data.frame(
+  Estadistico_Z2 = round(as.numeric(Z2), 4),
+  gl = p,
+  p_valor = round(as.numeric(p_valor), 4),
+  Decision = ifelse(p_valor < 0.05, "Rechazar H0", "No Rechazar H0"),
+  d_Mahalanobis = round(d_M, 4)
+)
+knitr::kable(resultados, caption = "Resultados de la prueba Z² con Σ conocida")
+```
+
+### **5) Conclusiones Generales**
+
+- **Normalidad univariada:** Los p-valores de las pruebas de Shapiro-Wilk fueron mayores a 0.05 para todas las variables, por lo que no se rechaza la hipótesis de normalidad univariada.  
+- **Normalidad multivariada:** La prueba de Shapiro multivariada (mshapiro.test) mostró un p-valor de `r round(p_mvn, 4)` (> 0.05), confirmando que el conjunto de datos sigue una distribución normal multivariada.  
+- **Atípicos:** Se detectó una observación potencialmente atípica (índice `r paste(idx_out, collapse=", ")`) según la distancia de Mahalanobis (97.5%). Sin embargo, su influencia sobre el vector de medias es baja y no modifica la decisión de la prueba Z², por lo que se mantuvo en el análisis.
+
+- **Prueba Z² con Σ conocida:**  
+  - Estadístico Z² = `r round(Z2, 3)` con `p` grados de libertad.  
+  - p-valor = `r round(p_valor, 4)` > 0.05 → **no se rechaza H₀**.  
+  Esto implica que el vector de medias muestrales es estadísticamente compatible con el vector de referencia μ₀.  
+- **Magnitud del efecto:** La distancia de Mahalanobis de la media es `r round(d_M, 4)`, lo que confirma que las diferencias entre la media observada y la teórica no son relevantes en términos prácticos.  
+- **Interpretación práctica:** La composición química promedio del pisco evaluado coincide con los valores de de referencia especificados para las cinco variables analizadas. Bajo las condiciones de muestreo y el nivel de significancia utilizado, el proceso de producción parece cumplir con los estándares de calidad establecidos.  
+
+
+

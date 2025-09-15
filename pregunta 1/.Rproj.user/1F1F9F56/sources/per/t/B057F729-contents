@@ -1,0 +1,69 @@
+
+library(dplyr)
+datos <- datos %>% rename(parental_level =`parental level of education`,
+                          race = `race/ethnicity`,
+                          test = `test preparation course`,
+                          math = `math score`,
+                          reading = `reading score`,
+                          writing = `writing score`)
+attach(datos)
+head(datos)
+str(datos)
+datos <- na.omit(datos)
+library(tidyverse)
+library(Hotelling)  
+library(car)  
+
+summary(datos)
+
+# --- Exploración descriptiva ---
+
+# Resumen estadístico de las notas
+summary(datos[, c("math","reading","writing")])
+
+# Correlaciones entre las tres notas
+cor(datos[, c("math","reading","writing")])
+
+# Distribución de frecuencias de variables categóricas
+table(datos$gender)
+table(datos$race)
+table(datos$parental_level)
+table(datos$lunch)
+table(datos$test)
+
+# Gráficos básicos
+
+library(ggplot2)
+library(GGally)  # para ggpairs
+
+# Pares de diagramas de dispersión + correlaciones
+GGally::ggpairs(datos[, c("math","reading","writing")])
+
+# Boxplots de notas por género
+ggplot(datos, aes(x = gender, y = math, fill = gender)) +
+  geom_boxplot() +
+  labs(title = "Distribución de puntaje en matemáticas por género")
+
+# Boxplots de notas por curso de preparación
+ggplot(datos, aes(x = test, y = reading, fill = test)) +
+  geom_boxplot() +
+  labs(title = "Puntaje en lectura por curso de preparación")
+
+# Boxplots de notas por nivel de educación de los padres
+ggplot(datos, aes(x = parental_level, y = writing, fill = parental_level)) +
+  geom_boxplot() +
+  theme(axis.text.x = element_text(angle=45, hjust=1)) +
+  labs(title = "Puntaje en escritura por educación de los padres")
+
+# Histogramas individuales
+ggplot(datos, aes(x = math)) + 
+  geom_histogram(bins = 30, fill="skyblue", color="black") +
+  labs(title = "Histograma de puntajes en Matemáticas")
+
+ggplot(datos, aes(x = reading)) + 
+  geom_histogram(bins = 30, fill="lightgreen", color="black") +
+  labs(title = "Histograma de puntajes en Lectura")
+
+ggplot(datos, aes(x = writing)) + 
+  geom_histogram(bins = 30, fill="lightpink", color="black") +
+  labs(title = "Histograma de puntajes en Escritura")
