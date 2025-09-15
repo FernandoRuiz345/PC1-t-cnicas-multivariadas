@@ -2,11 +2,11 @@
 output: word_document
 ---
 
-**UNIVERSIDAD NACIONAL AGRARIA LA MOLINA**
+**UNIVERSIDAD NACIONAL AGRARIA LA MOLINA **
 
-**FACULTAD DE ECONOMÍA Y PLANIFICACIÓN**
+**FACULTAD DE ECONOMÍA Y PLANIFICACIÓN **
 
-**DEPARTAMENTO DE ESTADÍSTICA**
+**DEPARTAMENTO DE ESTADÍSTICA **
 
 ```{r echo=F,out.width="200px"}
 knitr::include_graphics("escudo agraria.jpg")
