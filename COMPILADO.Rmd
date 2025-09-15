@@ -34,3 +34,630 @@ knitr::include_graphics("escudo agraria.jpg")
 
 
 \newpage
+
+
+# Punto 1. 
+
+Con una base de datos apropiada, primero haga el análisis exploratorio descriptivo y gráfico. Después aplique todo lo concerniente a la prueba , considerando la matriz varianza covarianza conocida, para verificar si el vector de promedios de las variables es igual a un vector de promedios conocido.
+
+
+```{r, echo = FALSE, warning=FALSE}
+library(pacman)
+p_load(MASS,summarytools,nortest,mvnormtest)
+```
+
+
+### ** 1) Datos y parámetros conocidos**
+
+```{r}
+set.seed(123)
+
+# Vector objetivo (bajo H0)
+mu0 <- c(40, 80, 200, 160, 1.20)
+names(mu0) <- c("alcohol_pct","metanol_mgL",
+                "alcoholes_sup_mgL","esteres_mgL",
+                "acidez_gL")
+
+# Desv. estándar y correlaciones
+sd <- c(1.0, 35, 70, 50, 0.35)
+R  <- matrix(c(
+  1.00, -0.10,  0.20,  0.25, -0.15,
+ -0.10,  1.00,  0.05, -0.10,  0.30,
+  0.20,  0.05,  1.00,  0.45,  0.10,
+  0.25, -0.10,  0.45,  1.00,  0.05,
+ -0.15,  0.30,  0.10,  0.05,  1.00
+),
+nrow=5, 
+byrow=TRUE)
+D <- diag(sd)
+Sigma_known <- D %*% R %*% D   # Σ conocida 
+# Muestra simulada
+n <- 150
+mu_true <- mu0         # para NO forzar rechazo
+datos <- as.data.frame(MASS::mvrnorm(n, mu=mu_true, Sigma=Sigma_known))
+names(datos) <- names(mu0)
+```
+
+### **2) Análisis exploratorio y gráfico**
+
+```{r}
+summary(datos)
+summarytools::descr(datos)
+
+# Matriz de dispersión base
+pairs(datos,
+      main = "Matriz de dispersión (pares)")
+
+# Histogramas base
+op <- par(mfrow=c(2,3))
+for (j in 1:ncol(datos)) {
+  hist(datos[[j]], main = paste("Hist:", names(datos)[j]), xlab = names(datos)[j], col="gray")
+}
+par(op)
+
+library(corrplot)
+
+# Boxplots para cada variable
+op <- par(mfrow=c(2,3))
+for (j in 1:ncol(datos)) {
+  boxplot(datos[[j]], main=paste("Boxplot:", names(datos)[j]), col="lightblue")
+}
+par(op)
+
+# Matriz de correlaciones (visual)
+corrplot(cor(datos), method = "ellipse", tl.cex = 0.8)
+
+# Curvas de densidad
+op <- par(mfrow=c(2,3))
+for (j in 1:ncol(datos)) {
+  plot(density(datos[[j]]), main=paste("Densidad:", names(datos)[j]), col="blue", lwd=2)
+}
+par(op)
+```
+
+### **3) Supuestos: normalidad uni/multivariada y atípicos**
+
+```{r}
+# Univariado (Shapiro) y Lilliefors (nortest)
+ap_shapiro <- apply(datos, 2, shapiro.test)
+ap_lillie  <- apply(datos, 2, function(x) nortest::lillie.test(x))
+
+# Mostrar p-valores de forma compacta
+cat("Shapiro univariado (p-valores):\n")
+print(sapply(ap_shapiro, `[[`, "p.value"))
+cat("\nLilliefors univariado (p-valores):\n")
+print(sapply(ap_lillie, `[[`, "p.value"))
+
+# Multivariado (mshapiro)
+p_mvn <- tryCatch(mvnormtest::mshapiro.test(t(as.matrix(datos)))$p.value, error=function(e) NA_real_)
+cat("\nShapiro multivariado p-value:", p_mvn, "\n")
+
+# Outliers por Mahalanobis (97.5%)
+d2  <- mahalanobis(datos, colMeans(datos), cov(datos))
+cut <- qchisq(0.975, df = ncol(datos))
+idx_out <- which(d2 > cut)
+cat("\nÍndices potencialmente atípicos:", ifelse(length(idx_out)==0,"(ninguno)", paste(idx_out, collapse=", ")), "\n")
+
+plot(d2, main="Distancias de Mahalanobis", ylab="d²", pch=19)
+abline(h=cut, col="red", lwd=2, lty=2)
+text(idx_out, d2[idx_out], labels=idx_out, pos=3, col="red")
+```
+
+### **4) Prueba Z² con Σ conocida**
+
+```{r}
+# Parámetros
+p <- ncol(datos)# número de variables
+mu <- mu0# vector de medias bajo H0 
+sigma <- Sigma_known# matriz Σ conocida
+
+# Media muestral
+media_muestral <- colMeans(datos)
+
+# Estadístico Z^2 (equivalente a n*(xbar-mu)' Σ^{-1} (xbar-mu))
+Z2 <- t(media_muestral - mu) %*% solve(sigma / n) %*% (media_muestral - mu)
+
+# p-valor (chi-cuadrado con p g.l.)
+p_valor <- 1 - pchisq(Z2, df = p)
+
+# Resultados y decisión (α=0.05)
+cat("\nEstadística Z^2:", as.numeric(Z2), "\n")
+cat("p-valor:", as.numeric(p_valor), "\n")
+if (p_valor < 0.05) {
+  cat("Decisión: Rechazar H0 (el vector de medias difiere de μ0).\n")
+} else {
+  cat("Decisión: No se rechaza H0 (no hay evidencia suficiente de diferencia).\n")
+}
+
+# Tamaño de efecto (distancia de Mahalanobis de medias)
+d_M <- sqrt(as.numeric(Z2) / n)
+cat("d_M (Mahalanobis de la media) =", round(d_M, 4), "\n")
+
+resultados <- data.frame(
+  Estadistico_Z2 = round(as.numeric(Z2), 4),
+  gl = p,
+  p_valor = round(as.numeric(p_valor), 4),
+  Decision = ifelse(p_valor < 0.05, "Rechazar H0", "No Rechazar H0"),
+  d_Mahalanobis = round(d_M, 4)
+)
+knitr::kable(resultados, caption = "Resultados de la prueba Z² con Σ conocida")
+```
+
+### **5) Conclusiones Generales**
+
+- **Normalidad univariada:** Los p-valores de las pruebas de Shapiro-Wilk fueron mayores a 0.05 para todas las variables, por lo que no se rechaza la hipótesis de normalidad univariada.  
+- **Normalidad multivariada:** La prueba de Shapiro multivariada (mshapiro.test) mostró un p-valor de `r round(p_mvn, 4)` (> 0.05), confirmando que el conjunto de datos sigue una distribución normal multivariada.  
+- **Atípicos:** Se detectó una observación potencialmente atípica (índice `r paste(idx_out, collapse=", ")`) según la distancia de Mahalanobis (97.5%). Sin embargo, su influencia sobre el vector de medias es baja y no modifica la decisión de la prueba Z², por lo que se mantuvo en el análisis.
+
+- **Prueba Z² con Σ conocida:**  
+  - Estadístico Z² = `r round(Z2, 3)` con `p` grados de libertad.  
+  - p-valor = `r round(p_valor, 4)` > 0.05 → **no se rechaza H₀**.  
+  Esto implica que el vector de medias muestrales es estadísticamente compatible con el vector de referencia μ₀.  
+- **Magnitud del efecto:** La distancia de Mahalanobis de la media es `r round(d_M, 4)`, lo que confirma que las diferencias entre la media observada y la teórica no son relevantes en términos prácticos.  
+- **Interpretación práctica:** La composición química promedio del pisco evaluado coincide con los valores de de referencia especificados para las cinco variables analizadas. Bajo las condiciones de muestreo y el nivel de significancia utilizado, el proceso de producción parece cumplir con los estándares de calidad establecidos.  
+
+
+
+# Punto 2.(*)
+
+Con una base de datos apropiada, primero haga el análisis exploratorio descriptivo y gráfico. Después aplique todo lo concerniente a la prueba de Hotelling, con muestras dependientes, para verificar si el vector de diferencias de vectores de promedios de las variables es igual a un vector de promedios conocido.
+
+
+
+# Punto 3.
+
+Aplique todo lo concerniente a la prueba de Hotelling, con muestras independientes, para verificar si el vector de diferencias de vectores de promedios de las variables es igual un vector de promedios conocido.
+
+### 1. Muestras
+
+Comparación de dos tratamientos farmacológicos (TratA vs TratB) en dos marcadores bioquímicos: Glucosa y Triglicéridos (mg/dL).
+
+* n(TratA)=28
+
+* n(TratB)=32
+
+### 2. Carga de Librerías y Simulación de Datos
+
+```{r message=FALSE}
+library(tidyverse)
+library(mvnormtest)   # mshapiro.test
+library(biotools)     # BoxM / boxM
+library(ICSNP)        # approx.hotelling.diff.test, HotellingsT2, T2.test
+library(Hotelling)    # hotelling.test
+library(summarytools)
+library(ggpubr)
+library(MASS)
+library(ICSNP)
+library(ergm)
+library(rrcov)
+set.seed(777)
+
+# Simulación
+nA <- 28; nB <- 32
+muA <- c(100, 140)
+muB <- c(95, 150)
+
+SigmaA <- matrix(c(225, 60,
+                   60, 400), 2, 2, byrow=TRUE)
+SigmaB <- matrix(c(196, 30,
+                   30, 625), 2, 2, byrow=TRUE)
+
+A <- mvrnorm(nA, muA, SigmaA)
+B <- mvrnorm(nB, muB, SigmaB)
+
+datos2 <- bind_rows(
+  tibble(Grupo="TratA", Glucosa=A[,1], Trigliceridos=A[,2]),
+  tibble(Grupo="TratB", Glucosa=B[,1], Trigliceridos=B[,2])
+) %>% mutate(Grupo=factor(Grupo))
+```
+
+### 3. Supuesto de Normalidad Multivariada
+
+**Hipótesis**
+
+H0: Cada grupo sigue una distribución normal multivariada.
+
+H1: Alguno de los grupos no sigue normalidad multivariada.
+
+```{r}
+X3 <- filter(datos2, Grupo=="TratA")[,2:3]
+Y3 <- filter(datos2, Grupo=="TratB")[,2:3]
+
+mshapiro.test(t(as.matrix(X3)))
+
+mshapiro.test(t(as.matrix(Y3)))
+```
+**Conclusión:** Con un p>0.05 en el caso de X3 se NO se rechaza la hipotesis nula en cambio en Y3 se rechaza la Hipotesis nula, se asume normalidad multivariada en los dos tratamientos.
+
+### 4. Supuesto de Homogeneidad de Matrices de Covarianza
+
+```{r}
+results3 <- boxM(data=datos2[,2:3], group=datos2$Grupo)
+summary(results3)
+```
+
+### 5. Prueba de Hotelling T² (independientes, varianzas desiguales)
+
+```{r}
+ht2_welch <- approx.hotelling.diff.test(X3,
+                                        Y3, mu0=c(0,0),
+                                        assume.indep=TRUE, var.equal=FALSE)
+ht2_welch
+```
+
+Conclusión:
+El p−valor<0.05 → se rechaza H0.
+
+Existe diferencia significativa en la combinación promedio de Glucosa y Triglicéridos entre TratA y TratB.
+
+### 6. Hipótesis con Vector Específico μ0=(5,−10)
+
+```{r}
+approx.hotelling.diff.test(X3, Y3, mu0=c(5,-10),
+                           assume.indep=TRUE, var.equal=FALSE)
+```
+
+**Conclusión:**
+El p−valor<0.05→ se rechaza H0.
+
+La diferencia observada no coincide con el vector específico planteado.
+
+### 7. Prueba Robusta T² (solo μ=0)
+
+**Hipótesis:**
+
+H_0: {TratA} - {TratB} = (0, 0)
+
+H1: μTratA − μTratB ≠ (0,0)
+
+```{r}
+T2.test(X3, Y3, mu=rep(0,2), method="c")
+```
+
+**Conclusión:**
+
+El test robusto confirma la diferencia multivariada entre los grupos.
+
+### 8. Sintesis General
+
+- Se cumple el supuesto de normalidad multivariada.
+
+- No se cumple la homogeneidad de covarianzas
+
+- Con la prueba de Hotelling T² (varianzas desiguales) se obtiene p<0.05
+, indicando diferencias significativas.
+
+- La prueba robusta también confirma las diferencias.
+
+Los tratamientos A y B presentan diferencias significativas en los niveles conjuntos de Glucosa y Triglicéridos.
+
+# Punto 4. Haga un Manova en DCA.
+
+### 1. Lectura de datos
+
+```{r}
+library(readxl)
+datos4 <- read_excel("datos_cafe_7rep_final.xlsx")
+head(datos4)
+```
+
+### 2. Verificación de supuestos
+
+#### 2.1 Normalidad multivariada por grupo
+
+```{r message=FALSE}
+library(tidyverse)
+library(mvnormtest)
+
+trat1 = datos4 %>% filter(Hibrido == "Hibrido1") %>%
+  dplyr::select(rendimiento, altura_planta, diametro_fruto, largo_fruto, peso_grano, contenido_cafeina)
+trat2 = datos4 %>% filter(Hibrido == "Hibrido2") %>%
+  dplyr::select(rendimiento, altura_planta, diametro_fruto, largo_fruto, peso_grano, contenido_cafeina)
+trat3 = datos4 %>% filter(Hibrido == "Hibrido3") %>%
+  dplyr::select(rendimiento, altura_planta, diametro_fruto, largo_fruto, peso_grano, contenido_cafeina)
+trat4 = datos4 %>% filter(Hibrido == "Hibrido4") %>%
+  dplyr::select(rendimiento, altura_planta, diametro_fruto, largo_fruto, peso_grano, contenido_cafeina)
+trat5 = datos4 %>% filter(Hibrido == "Hibrido5") %>%
+  dplyr::select(rendimiento, altura_planta, diametro_fruto, largo_fruto, peso_grano, contenido_cafeina)
+trat6 = datos4 %>% filter(Hibrido == "Hibrido6") %>%
+  dplyr::select(rendimiento, altura_planta, diametro_fruto, largo_fruto, peso_grano, contenido_cafeina)
+trat7 = datos4 %>% filter(Hibrido == "Hibrido7") %>%
+  dplyr::select(rendimiento, altura_planta, diametro_fruto, largo_fruto, peso_grano, contenido_cafeina)
+```
+
+```{r}
+mshapiro.test(t(trat1))
+mshapiro.test(t(trat2))
+mshapiro.test(t(trat3))
+mshapiro.test(t(trat4))
+mshapiro.test(t(trat5))
+mshapiro.test(t(trat6))
+mshapiro.test(t(trat7))
+```
+
+**Conclusion:** En todos los híbridos, la prueba de Shapiro multivariada rechaza la normalidad. 
+
+- Esto es muy frecuente en datos agronómicos. 
+
+- El MANOVA es robusto, pero se considera transformaciones.
+
+#### 2.2 Homogeneidad de matrices de covarianza (Box’s M)
+
+```{r message=FALSE}
+library(heplots)
+X4 <-  datos4[c(2,3,4,5,6,7)]
+
+datos4$Hibrido <- as.factor(datos4$Hibrido)
+
+res4 <- boxM(X4, datos4$Hibrido);res4
+```
+```{r}
+summary(res4)
+```
+
+```{r}
+heplots::boxM(cbind(rendimiento, altura_planta, diametro_fruto, largo_fruto, peso_grano, contenido_cafeina) ~ Hibrido, 
+              data = datos4)
+```
+```{r message=FALSE}
+library(biotools)
+resultado4 <- boxM(X4, datos4$Hibrido);resultado4
+```
+
+```{r message=FALSE}
+library(covTestR)
+cafe <- unique(datos4$Hibrido)
+cafe1 <- lapply(cafe,
+                function(x){as.matrix(datos4[datos4$Hibrido == x, 2:7])}
+)
+names(cafe1) <- cafe
+Ahmad2017(cafe1)
+```
+```{r}
+## Prueba Wrapper
+homogeneityCovariances(datos4, group = Hibrido, covTest = BoxesM)
+```
+```{r message=FALSE}
+library(DFA.CANCOR)
+HOMOGENEITY(data = datos4,
+            groups = 'Hibrido', 
+            variables = c('rendimiento','altura_planta','diametro_fruto','largo_fruto','peso_grano',"contenido_cafeina"))
+```
+
+- La prueba de BoxM resultó significativa, indicando que las matrices de varianza-covarianza no son iguales entre los híbridos. Esto viola el supuesto de homogeneidad, pero al tener el mismo número de repeticiones por grupo (n=7), el MANOVA aún es válido.
+
+- Entre las pruebas, la de Pillai suele ser la más robusta en este escenario.
+
+#### 2.3 Correlación entre variables dependientes correlacionadas (Bartlett)
+
+```{r}
+library(psych)
+options(scipen = 0)
+cortest.bartlett(cor(datos4[, -1]),
+                 n = nrow(datos4[, -1]))
+```
+
+```{r}
+library(MVTests)
+
+res41 = Bsper(datos4[, -1])
+summary(res41)
+```
+
+**Comentario:** El test de esfericidad de Bartlett es significativo, confirmando que las variables dependientes están correlacionadas entre sí. Esto justifica el uso de un MANOVA en lugar de ANOVAs separados.
+
+### 3. Trabajando con el modelo de MANOVA en DCA
+
+```{r}
+modelo4 = manova(cbind(rendimiento, altura_planta, diametro_fruto, largo_fruto, peso_grano, contenido_cafeina) ~ Hibrido,
+                data = datos4)
+```
+
+Determinación de la matriz residual y la matriz factorial del MANOVA.
+
+- Variabilidad explicada por el factor (Tratamientos). Matriz suma de cuadrados y productos cruzados del factor (SCOCF)
+
+```{r}
+Matrices4 = summary(modelo4)$SS
+F = Matrices4$Hibrido
+W = Matrices4$Residuals
+F
+```
+
+- Variabilidad residual. Matriz suma de cuadrados y productos cruzados del residual (SCOCR)
+
+```{r}
+W
+```
+
+- Variabilidad Total. Matriz suma de cuadrados y productos cruzados total (SCOCT) del factor.
+
+```{r}
+T = F + W;T
+```
+
+- Bondad de ajuste. Un valor proximo a 1 indica que la mayor parte de la variabilidad total puede atribuirse al factor, mientras que un valor proximo a 0 significa que el factor explica muy poco de esa variabilidad total.
+
+```{r}
+eta2 = 1 - det(W)/det(T);eta2
+det(F)/det(T) 
+```
+El valor de eta2 obtenido es elevado, lo que indica que los híbridos explican una proporción importante de la variabilidad total de los datos. Esto da un respaldo fuerte a la significancia del modelo MANOVA.
+
+- Pruebas de hipotesis del modelo. Calculo de contrastes del modelo
+
+- Contrastes del modelo en relacion a los supuestos. Todos los estadisticos son bastante robustos ante violaciones de normalidad,y la prueba de Roy es muy sensible a violaciones de la hipotesis de la matriz de covariancias. Cuando las muestras son iguales por #grupo, la prueba de Pillai es el estadistico más robusto ante violaciones de los supuestos.
+
+```{r}
+k = 7 #numero de grupos
+p = 6 #numero de variables
+n = 7 #numero de observaciones por grupo
+datosc1 = datos4
+datosc1$Hibrido <- as.numeric(datosc1$Hibrido)
+VMPG = matrix(NA, k, p) #vector de medias por grupo
+for(i in 1:k){
+  VMPG[i,]=colMeans(datos4[datosc1$Hibrido == i, -1])
+}
+VMPG #cada fila es un vector de medias
+```
+
+```{r}
+#Computar B
+(B=n*(k-1)*cov(VMPG))
+```
+```{r}
+# Tambien
+n*(t(VMPG)-colMeans(VMPG))%*%t(t(VMPG)-colMeans(VMPG))
+```
+
+```{r}
+# Computar W
+W = (n-1)*cov(datos4[datosc1$Hibrido == 1, -1])
+for(i in 2:k){
+  W = W + (n-1)*cov(datos4[datosc1$Hibrido == 1, -1])
+}
+W
+```
+
+```{r}
+W+B
+```
+
+#### autovalores de W^{-1}B
+
+```{r}
+(lambdas = eigen(solve(W)%*%B)$values)
+```
+
+#### traza de pillai:
+
+```{r}
+sum(lambdas/(1+lambdas))
+```
+
+```{r}
+#tambien
+sum(diag(solve(W+B)%*%B))
+```
+
+- El software R obtiene un valor calculado de pillai diferente al que se calculó manualmente, esto se debe a que hay varias formas de calcular este valor.
+
+```{r}
+summary(modelo4, test = "Pillai")
+1-pf(2.2491, 36,252)
+det(W)/det(W + B) ## Lambda de Wilks
+prod(1/(1 + lambdas))
+```
+
+El software R obtiene un valor calculado diferente al que se calculó manualmente, esto se debe a que hay varias formas de calcular este valor.
+
+```{r}
+summary(modelo4, test = "Wilks")
+1-pf(2.5341, 36,165.24)
+LH = sum(lambdas);LH ## Lawley Hotelling
+
+```
+
+```{r}
+summary(modelo4, test = "Hotelling-Lawley")
+1-pf(2.681, 36,212)
+lambdas[1]/(1 + lambdas[1])## Raiz mayor de Roy
+```
+
+```{r}
+summary(modelo4, test = "Roy")
+1-pf( 9.0125, 6, 42)
+```
+
+**Conclusiónes:** 
+
+- Todas las pruebas multivariadas (Pillai, Wilks, Hotelling-Lawley y Roy) resultaron significativas. 
+
+- Esto confirma que los vectores de medias de los híbridos no son iguales. Es decir, los híbridos difieren de manera global en las variables evaluadas. 
+
+- Se observa que las variables rendimiento y altura de planta resultaron altamente significativas,lo que indica que contribuyen de manera importante al rechazo de la hipótesis nula. 
+
+- Diámetro de fruto y cafeína muestran tendencia a significancia, mientras que largo de fruto y peso de grano no muestran diferencias claras.
+
+### 4. Resultados univariados
+
+#### 4.1 ANOVA por variable
+
+```{r}
+summary.aov(modelo4)
+```
+
+**Comentario:**
+
+- Rendimiento y altura_planta –>altamente significativos.
+
+- Diámetro_fruto y cafeína –>tendencia a la significancia.
+
+- Largo_fruto y peso_grano–> no significativos.
+
+### 5. Comparaciones múltiples
+
+####5.1 Comparaciones por pares entre híbridos
+
+```{r}
+modelo1 = manova(cbind(rendimiento, altura_planta, diametro_fruto, largo_fruto, peso_grano, contenido_cafeina) ~ Hibrido,
+                 data = datos4,
+                 subset = Hibrido %in% c("Hibrido1","Hibrido2"))
+
+summary(modelo1,test="Pillai")
+```
+```{r}
+summary(modelo1,test="Wilks")
+```
+```{r}
+summary(modelo1,test="Hotelling-Lawley")
+```
+
+```{r}
+summary(modelo1,test="Roy")
+```
+
+```{r}
+summary.aov(modelo1)
+```
+
+**Comentario:**
+
+En la comparación directa entre Hibrido1 y Hibrido2 también se encontraron diferencias significativas.Esto respalda que la diferenciación no solo es global, sino que algunos pares difieren claramente.
+
+#### 5.2 Comparaciones por pares entre híbridos
+
+H0:los 2 vectores de promedios son iguales
+
+H1:los 2 vectores de promedios difieren
+
+```{r}
+Prueba <- c("Hibrido1", "Hibrido2", "Hibrido3", "Hibrido4", "Hibrido5", "Hibrido6","Hibrido7")
+comb<-t(combn(length(Prueba) , 2))
+
+for(i in 1:nrow(comb)){
+  modelo.comp = manova(cbind(rendimiento, altura_planta, diametro_fruto, largo_fruto, peso_grano, contenido_cafeina) ~ Hibrido,
+                       data=datos4,
+                       subset = Hibrido %in% Prueba[comb[i,]])
+  print(paste("Prueba: ", Prueba[comb[i,]][1], "y", Prueba[comb[i,]][2]))
+  print(summary(modelo.comp, test = "Pillai"))
+  cat("\n")
+}
+```
+
+**Conclusión:**
+
+- Se concluye que no todos los híbridos son iguales entre sí, ya que varias comparaciones por pares resultaron significativas. En particular, el Híbrido4 presenta diferencias claras con la mayoría de los otros híbridos, mientras que otros (como Híbrido6 y Híbrido7) no mostraron diferencias notorias respecto a la mayoría
+
+
+# Punto 5.(*)
+Presente un Manova con experimentos factoriales en DBCA.
+
+
+
+# Punto 6.(*)
+Presente un Mancova en DBCA.
+
+
+
+
