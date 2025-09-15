@@ -4,7 +4,7 @@
 datos <- read_excel("datos_cafe_7rep_final.xlsx")
 
 
-# Seleccionar solo variables numéricas desde ese mismo objeto
+# Seleccionar sol o variables numéricas desde ese mismo objeto
 X <-  datos[c(2,3,4,5,6,7)]
 
 # Verificación
